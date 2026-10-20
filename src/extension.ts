@@ -3,7 +3,9 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
+import * as tls from 'tls';
 import SftpClient from 'ssh2-sftp-client';
+import { Client as FtpClient, FTPError } from 'basic-ftp';
 import { parse as parseJsonc, ParseError, printParseErrorCode } from 'jsonc-parser';
 
 /** Subset of the sftp.json format used by the SFTP extension (Natizyskunk / liximomo). */
@@ -20,6 +22,10 @@ interface SftpConfig {
   remotePath?: string;
   context?: string;
   connectTimeout?: number;
+  /** FTP only: true = explicit FTPS (default), "implicit" = implicit FTPS, false = unencrypted FTP. */
+  secure?: boolean | 'implicit' | 'control';
+  /** FTP only: TLS options such as rejectUnauthorized, passed to Node's tls.connect. */
+  secureOptions?: tls.ConnectionOptions;
   profiles?: Record<string, Partial<SftpConfig>>;
   defaultProfile?: string;
 }
@@ -43,6 +49,7 @@ interface RunCache {
   raw: Map<string, unknown>;
   profiles: Map<string, string>;
   warnedPlaintext: Set<string>;
+  warnedInsecure: Set<string>;
 }
 
 class CancelledError extends Error {
@@ -410,7 +417,7 @@ async function loadConfig(
           choices.length === 1
             ? choices[0]
             : await vscode.window.showQuickPick(choices, {
-                placeHolder: `Choose an SFTP profile for ${best.name ?? folder.name}`,
+                placeHolder: `Choose a connection profile for ${best.name ?? folder.name}`,
               });
         if (!picked) throw new CancelledError();
         profileName = picked === BASE ? '' : picked;
@@ -420,11 +427,29 @@ async function loadConfig(
     if (profileName) settings = { ...settings, ...profiles[profileName] };
   }
 
-  if (settings.protocol && settings.protocol !== 'sftp') {
-    throw new Error(`Protocol "${settings.protocol}" is not supported, only sftp`);
+  const protocol = settings.protocol ?? 'sftp';
+  if (protocol !== 'sftp' && protocol !== 'ftp') {
+    throw new Error(`Protocol "${settings.protocol}" is not supported, only sftp and ftp`);
   }
   if (!settings.host) throw new Error(`No "host" set in ${relConfig}`);
   if (!settings.remotePath) throw new Error(`No "remotePath" set in ${relConfig}`);
+
+  // FTP defaults to FTPS; unencrypted FTP and disabled certificate checks are only accepted when
+  // asked for explicitly, and are called out in the log once per config file.
+  if (protocol === 'ftp' && !cache.warnedInsecure.has(cfgPath)) {
+    cache.warnedInsecure.add(cfgPath);
+    if (settings.secure === false) {
+      output.appendLine(
+        `WARNING: ${relConfig} uses unencrypted FTP ("secure": false). The password and all file ` +
+          `contents are sent in plaintext. Prefer SFTP or FTPS.`
+      );
+    } else if (settings.secureOptions?.rejectUnauthorized === false) {
+      output.appendLine(
+        `WARNING: ${relConfig} disables TLS certificate verification ("rejectUnauthorized": false). ` +
+          `The identity of the server is not checked.`
+      );
+    }
+  }
 
   if (
     (typeof settings.password === 'string' || typeof settings.passphrase === 'string') &&
@@ -439,6 +464,7 @@ async function loadConfig(
 
   const label =
     `${settings.username ? settings.username + '@' : ''}${settings.host}` +
+    (protocol === 'ftp' ? (settings.secure === false ? ' [ftp]' : ' [ftps]') : '') +
     (profileName ? ` (${profileName})` : '');
 
   return {
@@ -661,6 +687,110 @@ async function connectVerified(c: SftpConfig): Promise<SftpClient> {
 }
 
 // ---------------------------------------------------------------------------
+// Remote clients (SFTP and FTP/FTPS)
+// ---------------------------------------------------------------------------
+
+/** The few operations the uploader needs, so SFTP and FTP(S) can be used interchangeably. */
+interface RemoteClient {
+  put(localPath: string, remotePath: string): Promise<void>;
+  /** Uploads a directory recursively; symbolic links are skipped. */
+  uploadDir(localDir: string, remoteDir: string): Promise<void>;
+  ensureDir(remoteDir: string): Promise<void>;
+  /** Deletes a remote file; a file that is already gone is not an error. */
+  delete(remotePath: string): Promise<void>;
+  end(): Promise<void>;
+}
+
+class SftpRemote implements RemoteClient {
+  constructor(private readonly client: SftpClient) {}
+
+  async put(localPath: string, remotePath: string): Promise<void> {
+    await this.client.put(localPath, remotePath);
+  }
+
+  async uploadDir(localDir: string, remoteDir: string): Promise<void> {
+    await this.client.uploadDir(localDir, remoteDir, { filter: (p) => !isSymlinkSync(p) });
+  }
+
+  async ensureDir(remoteDir: string): Promise<void> {
+    if (!(await this.client.exists(remoteDir))) await this.client.mkdir(remoteDir, true);
+  }
+
+  async delete(remotePath: string): Promise<void> {
+    await this.client.delete(remotePath, true);
+  }
+
+  async end(): Promise<void> {
+    await this.client.end();
+  }
+}
+
+class FtpRemote implements RemoteClient {
+  constructor(private readonly client: FtpClient) {}
+
+  async put(localPath: string, remotePath: string): Promise<void> {
+    // Absolute remote paths, so the working directory basic-ftp leaves behind after ensureDir does not matter.
+    await this.client.uploadFrom(localPath, remotePath);
+  }
+
+  async uploadDir(localDir: string, remoteDir: string): Promise<void> {
+    // Own directory walk instead of basic-ftp's uploadFromDir, which follows symbolic links.
+    await this.ensureDir(remoteDir);
+    for (const entry of await fs.promises.readdir(localDir, { withFileTypes: true })) {
+      if (entry.isSymbolicLink()) continue;
+      const local = path.join(localDir, entry.name);
+      const remote = path.posix.join(remoteDir, entry.name);
+      if (entry.isDirectory()) await this.uploadDir(local, remote);
+      else if (entry.isFile()) await this.put(local, remote);
+    }
+  }
+
+  async ensureDir(remoteDir: string): Promise<void> {
+    await this.client.ensureDir(remoteDir);
+  }
+
+  async delete(remotePath: string): Promise<void> {
+    await this.client.remove(remotePath, true);
+  }
+
+  async end(): Promise<void> {
+    this.client.close();
+  }
+}
+
+/** FTP reply codes a server gives when it does not understand or refuses "AUTH TLS". */
+const TLS_REFUSED_CODES = new Set([500, 502, 504, 534]);
+
+/** Connects over FTPS (explicit TLS by default, implicit on request) or, only when asked for, plain FTP. */
+async function connectFtp(c: SftpConfig): Promise<RemoteClient> {
+  const secure: boolean | 'implicit' = c.secure === false ? false : c.secure === 'implicit' ? 'implicit' : true;
+  const port = c.port ?? (secure === 'implicit' ? 990 : 21);
+  const user = c.username ?? 'anonymous';
+  const password =
+    typeof c.password === 'string' ? c.password : await ask(`Password for ${user}@${c.host}`);
+
+  const client = new FtpClient(c.connectTimeout ?? 20000);
+  try {
+    await client.access({ host: c.host, port, user, password, secure, secureOptions: c.secureOptions });
+  } catch (e) {
+    client.close();
+    if (c.secure === undefined && e instanceof FTPError && TLS_REFUSED_CODES.has(e.code)) {
+      throw new Error(
+        `${e.message.trim()} — the server does not accept FTPS (explicit TLS). ` +
+          `Set "secure": "implicit" for implicit FTPS, or "secure": false to allow unencrypted FTP.`
+      );
+    }
+    throw e;
+  }
+  return new FtpRemote(client);
+}
+
+async function connectRemote(c: SftpConfig): Promise<RemoteClient> {
+  if (c.protocol === 'ftp') return connectFtp(c);
+  return new SftpRemote(await connectVerified(c));
+}
+
+// ---------------------------------------------------------------------------
 // Upload
 // ---------------------------------------------------------------------------
 
@@ -691,7 +821,7 @@ async function uploadUris(uris: vscode.Uri[]) {
     return;
   }
 
-  const cache: RunCache = { raw: new Map(), profiles: new Map(), warnedPlaintext: new Set() };
+  const cache: RunCache = { raw: new Map(), profiles: new Map(), warnedPlaintext: new Set(), warnedInsecure: new Set() };
   const jobs = new Map<string, { config: ResolvedConfig; files: FileJob[] }>();
   const failed: string[] = [];
 
@@ -736,7 +866,7 @@ async function uploadUris(uris: vscode.Uri[]) {
   // 2. One connection per server, all files over it
   if (total > 0) {
     await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Notification, title: 'SFTP upload', cancellable: true },
+      { location: vscode.ProgressLocation.Notification, title: 'Git SFTP Upload', cancellable: true },
       async (progress, token) => {
         for (const { config, files } of jobs.values()) {
           if (token.isCancellationRequested || cancelled) break;
@@ -744,11 +874,11 @@ async function uploadUris(uris: vscode.Uri[]) {
             .getConfiguration('gitSftpUpload', config.folder.uri)
             .get<boolean>('deleteRemoteOnDelete', false);
 
-          let client: SftpClient;
+          let client: RemoteClient;
           try {
             progress.report({ message: `Connecting to ${config.label}…` });
             output.appendLine(`Connecting to ${config.label}`);
-            client = await connectVerified(config.settings);
+            client = await connectRemote(config.settings);
           } catch (e) {
             if (e instanceof CancelledError) {
               cancelled = true;
@@ -772,7 +902,7 @@ async function uploadUris(uris: vscode.Uri[]) {
                 const stat = await lstatSafe(f.localPath);
                 if (!stat) {
                   if (deleteRemote) {
-                    await client.delete(f.remotePath, true);
+                    await client.delete(f.remotePath);
                     deleted++;
                     output.appendLine(`  deleted     ${f.remotePath}`);
                   } else {
@@ -784,15 +914,13 @@ async function uploadUris(uris: vscode.Uri[]) {
                   skipped.push(f.display);
                   output.appendLine(`  skipped (symbolic link)  ${f.display}`);
                 } else if (stat.isDirectory()) {
-                  await client.uploadDir(f.localPath, f.remotePath, {
-                    filter: (p) => !isSymlinkSync(p),
-                  });
+                  await client.uploadDir(f.localPath, f.remotePath);
                   uploaded++;
                   output.appendLine(`  directory   ${f.display} → ${f.remotePath}`);
                 } else {
                   const dir = path.posix.dirname(f.remotePath);
                   if (!knownDirs.has(dir)) {
-                    if (!(await client.exists(dir))) await client.mkdir(dir, true);
+                    await client.ensureDir(dir);
                     knownDirs.add(dir);
                   }
                   await client.put(f.localPath, f.remotePath);

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- **FTP and FTPS support.** Configs with `"protocol": "ftp"` now work, using the same fields as the SFTP extension by Natizyskunk (`secure`, `secureOptions`). FTPS with explicit TLS is the default; `"secure": "implicit"` selects implicit FTPS (port 990).
+- **Unencrypted FTP only on request.** Plain FTP is used only with an explicit `"secure": false`, and the Output panel warns about it. Disabling certificate checks (`"rejectUnauthorized": false`) is warned about as well.
+- Directory uploads over FTP skip symbolic links, like SFTP uploads do.
+
 ## 0.1.1
 
 - Source code published on GitHub: https://github.com/dietercoopman/git-sftp-upload

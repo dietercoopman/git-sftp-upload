@@ -1,8 +1,8 @@
 {
   "name": "git-sftp-upload",
   "displayName": "Git SFTP Upload",
-  "description": "Upload changed git files via SFTP with a right-click in the Source Control view. Uses your existing .vscode/sftp.json.",
-  "version": "0.1.1",
+  "description": "Upload changed git files via SFTP or FTPS with a right-click in the Source Control view. Uses your existing .vscode/sftp.json.",
+  "version": "0.2.0",
   "publisher": "delta-solutions",
   "author": "Delta Solutions",
   "license": "MIT",
@@ -16,6 +16,8 @@
   },
   "keywords": [
     "sftp",
+    "ftps",
+    "ftp",
     "git",
     "upload",
     "deploy",
@@ -241,6 +243,7 @@
     "publish:ovsx": "vsce package && ovsx publish git-sftp-upload-$npm_package_version.vsix"
   },
   "dependencies": {
+    "basic-ftp": "^5.3.1",
     "jsonc-parser": "^3.3.1",
     "ssh2-sftp-client": "^11.0.0"
   },
