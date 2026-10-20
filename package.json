@@ -1,8 +1,8 @@
 {
   "name": "git-sftp-upload",
   "displayName": "Git SFTP Upload",
-  "description": "Upload changed git files via SFTP or FTPS with a right-click in the Source Control view. Uses your existing .vscode/sftp.json.",
-  "version": "0.2.0",
+  "description": "Upload only the files you changed in git to your server via SFTP or FTPS, in one click from Source Control or the Git SFTP Upload view. Uses your existing .vscode/sftp.json.",
+  "version": "0.2.1",
   "publisher": "delta-solutions",
   "author": "Delta Solutions",
   "license": "MIT",
@@ -21,7 +21,12 @@
     "git",
     "upload",
     "deploy",
-    "ssh"
+    "ssh",
+    "scm",
+    "source control",
+    "changed files",
+    "web development",
+    "remote"
   ],
   "pricing": "Free",
   "icon": "images/icon.png",

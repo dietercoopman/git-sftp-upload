@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- Marketplace listing: README rewritten with screenshots of the Git SFTP Upload view, the Source Control menus, the host key check and the Output panel, plus a FAQ. No functional changes.
+
 ## 0.2.0
 
 - **FTP and FTPS support.** Configs with `"protocol": "ftp"` now work, using the same fields as the SFTP extension by Natizyskunk (`secure`, `secureOptions`). FTPS with explicit TLS is the default; `"secure": "implicit"` selects implicit FTPS (port 990).
