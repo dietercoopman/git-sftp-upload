@@ -1,0 +1,256 @@
+{
+  "name": "git-sftp-upload",
+  "displayName": "Git SFTP Upload",
+  "description": "Upload changed git files via SFTP with a right-click in the Source Control view. Uses your existing .vscode/sftp.json.",
+  "version": "0.1.1",
+  "publisher": "delta-solutions",
+  "author": "Delta Solutions",
+  "license": "MIT",
+  "homepage": "https://www.deltasolutions.be/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dietercoopman/git-sftp-upload.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dietercoopman/git-sftp-upload/issues"
+  },
+  "keywords": [
+    "sftp",
+    "git",
+    "upload",
+    "deploy",
+    "ssh"
+  ],
+  "pricing": "Free",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#0f172a",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Uploads workspace files to the server defined in the workspace's sftp.json, so it only runs in trusted workspaces."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Requires files on the local file system."
+    }
+  },
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitSftpUpload.uploadResources",
+        "title": "Upload via SFTP",
+        "category": "Git SFTP",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "gitSftpUpload.uploadGroup",
+        "title": "Upload All via SFTP",
+        "category": "Git SFTP",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "gitSftpUpload.uploadAllChanged",
+        "title": "Upload All Changed Files via SFTP",
+        "category": "Git SFTP",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "gitSftpUpload.forgetTrustedHostKeys",
+        "title": "Forget Trusted Host Keys",
+        "category": "Git SFTP"
+      },
+      {
+        "command": "gitSftpUpload.uploadFromView",
+        "title": "Upload via SFTP",
+        "category": "Git SFTP",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "gitSftpUpload.uploadAllFromView",
+        "title": "Upload All Changed Files via SFTP",
+        "category": "Git SFTP",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "gitSftpUpload.refreshView",
+        "title": "Refresh Changed Files",
+        "category": "Git SFTP",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "gitSftpUpload.openFile",
+        "title": "Open File",
+        "category": "Git SFTP",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "gitSftpUpload.openChanges",
+        "title": "Open Changes",
+        "category": "Git SFTP",
+        "icon": "$(diff)"
+      }
+    ],
+    "menus": {
+      "scm/resourceState/context": [
+        {
+          "command": "gitSftpUpload.uploadResources",
+          "when": "scmProvider == git",
+          "group": "7_sftp@1"
+        }
+      ],
+      "scm/resourceGroup/context": [
+        {
+          "command": "gitSftpUpload.uploadGroup",
+          "when": "scmProvider == git",
+          "group": "7_sftp@1"
+        }
+      ],
+      "scm/title": [
+        {
+          "command": "gitSftpUpload.uploadAllChanged",
+          "when": "scmProvider == git",
+          "group": "7_sftp@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "gitSftpUpload.uploadResources",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadGroup",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.openFile",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.openChanges",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadAllFromView",
+          "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "gitSftpUpload.uploadAllFromView",
+          "when": "view == gitSftpUpload.changes",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitSftpUpload.refreshView",
+          "when": "view == gitSftpUpload.changes",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "gitSftpUpload.uploadFromView",
+          "when": "view == gitSftpUpload.changes",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView",
+          "when": "view == gitSftpUpload.changes",
+          "group": "1_upload@1"
+        },
+        {
+          "command": "gitSftpUpload.openFile",
+          "when": "view == gitSftpUpload.changes && viewItem == file",
+          "group": "2_open@1"
+        },
+        {
+          "command": "gitSftpUpload.openChanges",
+          "when": "view == gitSftpUpload.changes && viewItem == file",
+          "group": "2_open@2"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Git SFTP Upload",
+      "properties": {
+        "gitSftpUpload.configFile": {
+          "type": "string",
+          "default": ".vscode/sftp.json",
+          "description": "Path (relative to the workspace folder, and inside it) to the SFTP config. Defaults to the same file used by the SFTP extension by Natizyskunk."
+        },
+        "gitSftpUpload.deleteRemoteOnDelete": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also delete the file on the server when it has been deleted locally. By default, deleted files are skipped."
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "gitSftpUpload",
+          "title": "Git SFTP Upload",
+          "icon": "$(cloud-upload)"
+        }
+      ]
+    },
+    "views": {
+      "gitSftpUpload": [
+        {
+          "id": "gitSftpUpload.changes",
+          "name": "Changed Files",
+          "contextualTitle": "Git SFTP Upload",
+          "icon": "$(cloud-upload)"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "gitSftpUpload.changes",
+        "contents": "No changed files to upload.\nFiles that are staged, modified or untracked in git appear here as soon as they change.\n[Refresh](command:gitSftpUpload.refreshView)",
+        "when": "gitSftpUpload.gitAvailable"
+      },
+      {
+        "view": "gitSftpUpload.changes",
+        "contents": "Open a folder that contains a git repository to see its changed files here.",
+        "when": "!gitSftpUpload.gitAvailable"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./ --noEmit && node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package",
+    "publish": "npm run publish:marketplace && npm run publish:ovsx",
+    "publish:marketplace": "vsce publish",
+    "publish:ovsx": "vsce package && ovsx publish git-sftp-upload-$npm_package_version.vsix"
+  },
+  "dependencies": {
+    "jsonc-parser": "^3.3.1",
+    "ssh2-sftp-client": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/ssh2-sftp-client": "^9.0.4",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.2",
+    "ovsx": "^1.3.0",
+    "typescript": "^5.6.0"
+  }
+}
