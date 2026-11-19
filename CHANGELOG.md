@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.5
+
+- **Security fix: uploaded files no longer become world-writable.** SFTP uploads went through a library call that changed every uploaded file to mode 0666 (`-rw-rw-rw-`), also when the file already existed with stricter permissions. Uploads now keep the permissions of an existing file and give a new file the server's default permissions. Files uploaded with an earlier version may still be 0666 on the server; see the README to find and fix them.
+
 ## 0.2.4
 
 - README badges: the Marketplace version and installs badges are back, now served by vsmarketplacebadges.dev instead of a static "install" badge. No functional changes.

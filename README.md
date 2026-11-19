@@ -93,6 +93,7 @@ Settings:
 
 - **Host key verification (SFTP).** The server's SSH host key is checked against `~/.ssh/known_hosts`. Unknown hosts are shown once with their fingerprint and must be confirmed; the key is then remembered. A key that no longer matches is refused. Use **Git SFTP: Forget Trusted Host Keys** if a server key was changed on purpose.
 - **Encrypted by default (FTP).** `"protocol": "ftp"` means FTPS with certificate verification. Plain FTP sends the password and every file in plaintext, so it requires `"secure": false` and is flagged in the Output panel.
+- **Permissions are kept (SFTP).** An uploaded file keeps the owner and permissions it already had on the server; a new file gets the server's default permissions. Versions before 0.2.5 set every uploaded file to 0666; to find such files on a Linux server, run `find /var/www/mysite -type f -perm -o+w` and fix them with `chmod 644`.
 - **Symbolic links are never followed.** Linked files and links inside uploaded directories are skipped, so a link pointing outside the repository cannot leak its target.
 - **Trusted workspaces only.** The extension stays disabled in Restricted Mode, because the workspace itself decides where files are uploaded.
 - **Config stays in the workspace.** `gitSftpUpload.configFile` must point inside the workspace folder.

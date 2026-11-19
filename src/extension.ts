@@ -7,6 +7,7 @@ import * as tls from 'tls';
 import SftpClient from 'ssh2-sftp-client';
 import { Client as FtpClient, FTPError } from 'basic-ftp';
 import { parse as parseJsonc, ParseError, printParseErrorCode } from 'jsonc-parser';
+import { putWithoutChmod, RawSftp } from './sftpWrite';
 
 /** Subset of the sftp.json format used by the SFTP extension (Natizyskunk / liximomo). */
 interface SftpConfig {
@@ -705,11 +706,22 @@ class SftpRemote implements RemoteClient {
   constructor(private readonly client: SftpClient) {}
 
   async put(localPath: string, remotePath: string): Promise<void> {
-    await this.client.put(localPath, remotePath);
+    // Not client.put(): that chmods every uploaded file to 0666 (see sftpWrite.ts).
+    const sftp = (this.client as unknown as { sftp?: RawSftp }).sftp;
+    if (!sftp) throw new Error('No SFTP connection');
+    await putWithoutChmod(sftp, localPath, remotePath);
   }
 
   async uploadDir(localDir: string, remoteDir: string): Promise<void> {
-    await this.client.uploadDir(localDir, remoteDir, { filter: (p) => !isSymlinkSync(p) });
+    // Own directory walk instead of client.uploadDir, which uploads through the same chmodding put().
+    await this.ensureDir(remoteDir);
+    for (const entry of await fs.promises.readdir(localDir, { withFileTypes: true })) {
+      if (entry.isSymbolicLink()) continue;
+      const local = path.join(localDir, entry.name);
+      const remote = path.posix.join(remoteDir, entry.name);
+      if (entry.isDirectory()) await this.uploadDir(local, remote);
+      else if (entry.isFile()) await this.put(local, remote);
+    }
   }
 
   async ensureDir(remoteDir: string): Promise<void> {
@@ -804,14 +816,6 @@ async function lstatSafe(p: string): Promise<fs.Stats | undefined> {
     return await fs.promises.lstat(p);
   } catch {
     return undefined;
-  }
-}
-
-function isSymlinkSync(p: string): boolean {
-  try {
-    return fs.lstatSync(p).isSymbolicLink();
-  } catch {
-    return false;
   }
 }
 
