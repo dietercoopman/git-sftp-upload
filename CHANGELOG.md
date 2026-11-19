@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3
+
+- README badges: shields.io retired its Visual Studio Marketplace badges, which showed as "retired badge". The Marketplace badge is now a plain link and the installs badge is gone. No functional changes.
+
 ## 0.2.2
 
 - Fixed the link to the PDF user guide in the README (and so on the Marketplace page): it now points to `Git-SFTP-Upload-User-Guide.pdf`, which no longer carries a version number. No functional changes.
