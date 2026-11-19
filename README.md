@@ -58,7 +58,7 @@ A progress notification with cancel, a result summary when it is done, and a ful
 2. Make sure your project has a `.vscode/sftp.json` (see below). If you use the SFTP extension by Natizyskunk, you already have one.
 3. Change some files. Click the cloud icon next to a file, a group, or in the view header. Done.
 
-A full user guide with screenshots (PDF) is available from Delta Solutions: https://www.deltasolutions.be/delta-tools-center/downloads/git-sftp-upload/Git-SFTP-Upload-User-Guide-0.1.0.pdf
+A full user guide with screenshots (PDF) is available from Delta Solutions: https://www.deltasolutions.be/delta-tools-center/downloads/git-sftp-upload/Git-SFTP-Upload-User-Guide.pdf
 
 ## Configuration
 

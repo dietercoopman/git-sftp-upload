@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+- Fixed the link to the PDF user guide in the README (and so on the Marketplace page): it now points to `Git-SFTP-Upload-User-Guide.pdf`, which no longer carries a version number. No functional changes.
+
 ## 0.2.1
 
 - Marketplace listing: README rewritten with screenshots of the Git SFTP Upload view, the Source Control menus, the host key check and the Output panel, plus a FAQ. No functional changes.
