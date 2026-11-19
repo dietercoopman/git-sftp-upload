@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4
+
+- README badges: the Marketplace version and installs badges are back, now served by vsmarketplacebadges.dev instead of a static "install" badge. No functional changes.
+
 ## 0.2.3
 
 - README badges: shields.io retired its Visual Studio Marketplace badges, which showed as "retired badge". The Marketplace badge is now a plain link and the installs badge is gone. No functional changes.

@@ -6,7 +6,8 @@
 
 It reads the `.vscode/sftp.json` you already have, so there is nothing to set up.
 
-[![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-install-0f172a)](https://marketplace.visualstudio.com/items?itemName=delta-solutions.git-sftp-upload)
+[![VS Marketplace](https://vsmarketplacebadges.dev/version-short/delta-solutions.git-sftp-upload.svg?color=0f172a)](https://marketplace.visualstudio.com/items?itemName=delta-solutions.git-sftp-upload)
+[![Installs](https://vsmarketplacebadges.dev/installs-short/delta-solutions.git-sftp-upload.svg?color=0f172a)](https://marketplace.visualstudio.com/items?itemName=delta-solutions.git-sftp-upload)
 [![Open VSX](https://img.shields.io/open-vsx/v/delta-solutions/git-sftp-upload?label=Open%20VSX&color=0f172a)](https://open-vsx.org/extension/delta-solutions/git-sftp-upload)
 [![License: MIT](https://img.shields.io/badge/license-MIT-0f172a)](LICENSE)
 
