@@ -54,6 +54,12 @@ Click the **cloud icon** in the Activity Bar. The view lists only the files git 
 
 ![The Git SFTP Upload view with the per-file upload menu and a multi-selection](images/marketplace/view.png)
 
+### Production in red
+
+Give a server a color in `sftp.json`, for example `"color": "red"` on the production profile. The upload buttons in the view take that color, and the view names the server your files go to, so a red button means: this goes live. The target is the config itself or its `defaultProfile`; when you choose a profile at upload time, the buttons stay neutral. [SFTP Remote Editor](https://marketplace.visualstudio.com/items?itemName=delta-solutions.sftp-remote-editor) sets the same color with **Set Color...**.
+
+![The Changed Files view uploading to a red production server and to a green staging server](images/marketplace/color.png)
+
 ### Right in Source Control
 
 Right-click a file under *Changes* or *Staged Changes* → **Upload via SFTP**. Right-click a group header → **Upload All via SFTP**. The `...` menu at the top of Source Control has **Upload All Changed Files via SFTP** for staged, unstaged and untracked files in one go.
@@ -90,6 +96,8 @@ The extension reads the same `.vscode/sftp.json` as the SFTP extension by Natizy
 Supported: `host`, `port`, `username`, `password`, `privateKeyPath`, `passphrase`, `agent`, `remotePath`, `context`, `connectTimeout`, `ignore`, `profiles` + `defaultProfile`, and an array of configs.
 
 `ignore` lists paths that are never uploaded, in gitignore syntax relative to the `context`, for example `["/.env", "/wp-content/cache/", "*.log"]`. Changed files on that list are skipped, also inside an uploaded folder, and are never deleted on the server. [SFTP Folder Upload](https://marketplace.visualstudio.com/items?itemName=delta-solutions.sftp-folder-upload) adds **Never Upload** to the Explorer to fill this list with a right-click.
+
+`color` (`red`, `orange`, `yellow`, `green`, `blue` or `purple`) colors the upload buttons in the Changed Files view after the server they upload to, so uploading to a red production server means pressing a red button. The target is the config itself, or its `defaultProfile`; when a profile is chosen at upload time, the buttons stay neutral, and with several servers the most urgent color is shown. [SFTP Remote Editor](https://marketplace.visualstudio.com/items?itemName=delta-solutions.sftp-remote-editor) sets the same `color` with **Set Color...** and shows it on the server's tabs and in the status bar.
 
 Protocols:
 

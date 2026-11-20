@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.0
+
+- **Upload buttons in the server's color.** With `"color": "red"` in sftp.json (as set by SFTP Remote Editor), the upload buttons in the Changed Files view turn red, and the view names the target server above the files. The target is the config itself or its `defaultProfile`; the buttons stay neutral when a profile is chosen at upload time, and the most urgent color wins with several servers.
+
 ## 0.3.0
 
 - **Respects the `ignore` list of sftp.json.** Changed files on that list (gitignore syntax, relative to the `context`), such as `/.env`, are skipped and logged, also inside an uploaded folder, and are never deleted on the server. Works with **Never Upload** in SFTP Folder Upload and with the `ignore` list of the SFTP extension by Natizyskunk.

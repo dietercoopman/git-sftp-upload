@@ -9,6 +9,7 @@ import { Client as FtpClient, FTPError } from 'basic-ftp';
 import { parse as parseJsonc, ParseError, printParseErrorCode } from 'jsonc-parser';
 import ignore from 'ignore';
 import { putWithoutChmod, RawSftp } from './sftpWrite';
+import { SERVER_COLORS, ServerColorIndicator } from './serverColor';
 
 /** Subset of the sftp.json format used by the SFTP extension (Natizyskunk / liximomo). */
 interface SftpConfig {
@@ -88,14 +89,18 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('gitSftpUpload.uploadAllChanged', async () =>
       uploadUris(await collectAllChangedUris())
     ),
-    vscode.commands.registerCommand('gitSftpUpload.uploadAllFromView', async () =>
-      uploadUris(await collectAllChangedUris())
-    ),
-    vscode.commands.registerCommand('gitSftpUpload.uploadFromView', (node?: TreeNode, selected?: TreeNode[]) => {
-      // VS Code passes the clicked node plus the current multi-selection.
-      const nodes = selected?.length ? selected : node ? [node] : [...view.selection];
-      uploadUris(tree.urisFor(nodes));
-    }),
+    new ServerColorIndicator(view),
+    // The same upload buttons once more per server color, shown by the gitSftpUpload.serverColor context key.
+    ...['', ...Object.keys(SERVER_COLORS).map((c) => `.${c}`)].flatMap((suffix) => [
+      vscode.commands.registerCommand(`gitSftpUpload.uploadAllFromView${suffix}`, async () =>
+        uploadUris(await collectAllChangedUris())
+      ),
+      vscode.commands.registerCommand(`gitSftpUpload.uploadFromView${suffix}`, (node?: TreeNode, selected?: TreeNode[]) => {
+        // VS Code passes the clicked node plus the current multi-selection.
+        const nodes = selected?.length ? selected : node ? [node] : [...view.selection];
+        uploadUris(tree.urisFor(nodes));
+      }),
+    ]),
     vscode.commands.registerCommand('gitSftpUpload.refreshView', () => tree.refresh()),
     vscode.commands.registerCommand('gitSftpUpload.openFile', (node?: TreeNode) => {
       if (node?.kind === 'file') vscode.commands.executeCommand('vscode.open', node.uri);

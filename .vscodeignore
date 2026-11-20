@@ -5,6 +5,7 @@ node_modules/**
 **/*.ts
 **/*.map
 **/*.svg
+!media/*.svg
 *.vsix
 esbuild.mjs
 tsconfig.json

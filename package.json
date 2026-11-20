@@ -2,7 +2,7 @@
   "name": "git-sftp-upload",
   "displayName": "Git SFTP Upload",
   "description": "Upload only the files you changed in git to your server via SFTP or FTPS, in one click from Source Control or the Git SFTP Upload view. Uses your existing .vscode/sftp.json.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "delta-solutions",
   "author": "Delta Solutions",
   "license": "MIT",
@@ -119,6 +119,114 @@
         "title": "Open Changes",
         "category": "Git SFTP",
         "icon": "$(diff)"
+      },
+      {
+        "command": "gitSftpUpload.uploadAllFromView.red",
+        "title": "Upload All Changed Files via SFTP",
+        "category": "Git SFTP",
+        "icon": {
+          "light": "media/upload-red-light.svg",
+          "dark": "media/upload-red-dark.svg"
+        }
+      },
+      {
+        "command": "gitSftpUpload.uploadFromView.red",
+        "title": "Upload via SFTP",
+        "category": "Git SFTP",
+        "icon": {
+          "light": "media/upload-red-light.svg",
+          "dark": "media/upload-red-dark.svg"
+        }
+      },
+      {
+        "command": "gitSftpUpload.uploadAllFromView.orange",
+        "title": "Upload All Changed Files via SFTP",
+        "category": "Git SFTP",
+        "icon": {
+          "light": "media/upload-orange-light.svg",
+          "dark": "media/upload-orange-dark.svg"
+        }
+      },
+      {
+        "command": "gitSftpUpload.uploadFromView.orange",
+        "title": "Upload via SFTP",
+        "category": "Git SFTP",
+        "icon": {
+          "light": "media/upload-orange-light.svg",
+          "dark": "media/upload-orange-dark.svg"
+        }
+      },
+      {
+        "command": "gitSftpUpload.uploadAllFromView.yellow",
+        "title": "Upload All Changed Files via SFTP",
+        "category": "Git SFTP",
+        "icon": {
+          "light": "media/upload-yellow-light.svg",
+          "dark": "media/upload-yellow-dark.svg"
+        }
+      },
+      {
+        "command": "gitSftpUpload.uploadFromView.yellow",
+        "title": "Upload via SFTP",
+        "category": "Git SFTP",
+        "icon": {
+          "light": "media/upload-yellow-light.svg",
+          "dark": "media/upload-yellow-dark.svg"
+        }
+      },
+      {
+        "command": "gitSftpUpload.uploadAllFromView.purple",
+        "title": "Upload All Changed Files via SFTP",
+        "category": "Git SFTP",
+        "icon": {
+          "light": "media/upload-purple-light.svg",
+          "dark": "media/upload-purple-dark.svg"
+        }
+      },
+      {
+        "command": "gitSftpUpload.uploadFromView.purple",
+        "title": "Upload via SFTP",
+        "category": "Git SFTP",
+        "icon": {
+          "light": "media/upload-purple-light.svg",
+          "dark": "media/upload-purple-dark.svg"
+        }
+      },
+      {
+        "command": "gitSftpUpload.uploadAllFromView.blue",
+        "title": "Upload All Changed Files via SFTP",
+        "category": "Git SFTP",
+        "icon": {
+          "light": "media/upload-blue-light.svg",
+          "dark": "media/upload-blue-dark.svg"
+        }
+      },
+      {
+        "command": "gitSftpUpload.uploadFromView.blue",
+        "title": "Upload via SFTP",
+        "category": "Git SFTP",
+        "icon": {
+          "light": "media/upload-blue-light.svg",
+          "dark": "media/upload-blue-dark.svg"
+        }
+      },
+      {
+        "command": "gitSftpUpload.uploadAllFromView.green",
+        "title": "Upload All Changed Files via SFTP",
+        "category": "Git SFTP",
+        "icon": {
+          "light": "media/upload-green-light.svg",
+          "dark": "media/upload-green-dark.svg"
+        }
+      },
+      {
+        "command": "gitSftpUpload.uploadFromView.green",
+        "title": "Upload via SFTP",
+        "category": "Git SFTP",
+        "icon": {
+          "light": "media/upload-green-light.svg",
+          "dark": "media/upload-green-dark.svg"
+        }
       }
     ],
     "menus": {
@@ -167,12 +275,90 @@
         {
           "command": "gitSftpUpload.uploadAllFromView",
           "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadAllFromView.red",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView.red",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadAllFromView.orange",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView.orange",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadAllFromView.yellow",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView.yellow",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadAllFromView.purple",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView.purple",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadAllFromView.blue",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView.blue",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadAllFromView.green",
+          "when": "false"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView.green",
+          "when": "false"
         }
       ],
       "view/title": [
         {
           "command": "gitSftpUpload.uploadAllFromView",
-          "when": "view == gitSftpUpload.changes",
+          "when": "view == gitSftpUpload.changes && !gitSftpUpload.serverColor",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitSftpUpload.uploadAllFromView.green",
+          "when": "view == gitSftpUpload.changes && gitSftpUpload.serverColor == green",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitSftpUpload.uploadAllFromView.blue",
+          "when": "view == gitSftpUpload.changes && gitSftpUpload.serverColor == blue",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitSftpUpload.uploadAllFromView.purple",
+          "when": "view == gitSftpUpload.changes && gitSftpUpload.serverColor == purple",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitSftpUpload.uploadAllFromView.yellow",
+          "when": "view == gitSftpUpload.changes && gitSftpUpload.serverColor == yellow",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitSftpUpload.uploadAllFromView.orange",
+          "when": "view == gitSftpUpload.changes && gitSftpUpload.serverColor == orange",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitSftpUpload.uploadAllFromView.red",
+          "when": "view == gitSftpUpload.changes && gitSftpUpload.serverColor == red",
           "group": "navigation@1"
         },
         {
@@ -184,7 +370,37 @@
       "view/item/context": [
         {
           "command": "gitSftpUpload.uploadFromView",
-          "when": "view == gitSftpUpload.changes",
+          "when": "view == gitSftpUpload.changes && !gitSftpUpload.serverColor",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView.green",
+          "when": "view == gitSftpUpload.changes && gitSftpUpload.serverColor == green",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView.blue",
+          "when": "view == gitSftpUpload.changes && gitSftpUpload.serverColor == blue",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView.purple",
+          "when": "view == gitSftpUpload.changes && gitSftpUpload.serverColor == purple",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView.yellow",
+          "when": "view == gitSftpUpload.changes && gitSftpUpload.serverColor == yellow",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView.orange",
+          "when": "view == gitSftpUpload.changes && gitSftpUpload.serverColor == orange",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitSftpUpload.uploadFromView.red",
+          "when": "view == gitSftpUpload.changes && gitSftpUpload.serverColor == red",
           "group": "inline@1"
         },
         {
