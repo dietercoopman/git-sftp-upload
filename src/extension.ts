@@ -7,6 +7,7 @@ import * as tls from 'tls';
 import SftpClient from 'ssh2-sftp-client';
 import { Client as FtpClient, FTPError } from 'basic-ftp';
 import { parse as parseJsonc, ParseError, printParseErrorCode } from 'jsonc-parser';
+import ignore from 'ignore';
 import { putWithoutChmod, RawSftp } from './sftpWrite';
 
 /** Subset of the sftp.json format used by the SFTP extension (Natizyskunk / liximomo). */
@@ -23,6 +24,8 @@ interface SftpConfig {
   remotePath?: string;
   context?: string;
   connectTimeout?: number;
+  /** Paths that are never uploaded (gitignore syntax, relative to the context), as in the SFTP extension. */
+  ignore?: string[];
   /** FTP only: true = explicit FTPS (default), "implicit" = implicit FTPS, false = unencrypted FTP. */
   secure?: boolean | 'implicit' | 'control';
   /** FTP only: TLS options such as rejectUnauthorized, passed to Node's tls.connect. */
@@ -38,6 +41,8 @@ interface ResolvedConfig {
   contextPath: string;
   remotePath: string;
   settings: SftpConfig;
+  /** True for a path (relative to the context, forward slashes) matched by the "ignore" list of sftp.json. */
+  isIgnored: (rel: string, isDir: boolean) => boolean;
 }
 
 interface FileJob {
@@ -468,6 +473,9 @@ async function loadConfig(
     (protocol === 'ftp' ? (settings.secure === false ? ' [ftp]' : ' [ftps]') : '') +
     (profileName ? ` (${profileName})` : '');
 
+  const patterns = Array.isArray(settings.ignore) ? settings.ignore.filter((p) => typeof p === 'string') : [];
+  const matcher = ignore().add(patterns);
+
   return {
     key: `${cfgPath}#${bestIndex}#${profileName ?? ''}`,
     label,
@@ -475,6 +483,7 @@ async function loadConfig(
     contextPath: bestContext,
     remotePath: settings.remotePath,
     settings,
+    isIgnored: (rel, isDir) => rel !== '' && !rel.startsWith('..') && matcher.ignores(isDir ? `${rel}/` : rel),
   };
 }
 
@@ -694,8 +703,8 @@ async function connectVerified(c: SftpConfig): Promise<SftpClient> {
 /** The few operations the uploader needs, so SFTP and FTP(S) can be used interchangeably. */
 interface RemoteClient {
   put(localPath: string, remotePath: string): Promise<void>;
-  /** Uploads a directory recursively; symbolic links are skipped. */
-  uploadDir(localDir: string, remoteDir: string): Promise<void>;
+  /** Uploads a directory recursively; symbolic links, and entries for which skip returns true, are skipped. */
+  uploadDir(localDir: string, remoteDir: string, skip?: (localPath: string, isDir: boolean) => boolean): Promise<void>;
   ensureDir(remoteDir: string): Promise<void>;
   /** Deletes a remote file; a file that is already gone is not an error. */
   delete(remotePath: string): Promise<void>;
@@ -712,14 +721,15 @@ class SftpRemote implements RemoteClient {
     await putWithoutChmod(sftp, localPath, remotePath);
   }
 
-  async uploadDir(localDir: string, remoteDir: string): Promise<void> {
+  async uploadDir(localDir: string, remoteDir: string, skip?: (localPath: string, isDir: boolean) => boolean): Promise<void> {
     // Own directory walk instead of client.uploadDir, which uploads through the same chmodding put().
     await this.ensureDir(remoteDir);
     for (const entry of await fs.promises.readdir(localDir, { withFileTypes: true })) {
       if (entry.isSymbolicLink()) continue;
       const local = path.join(localDir, entry.name);
       const remote = path.posix.join(remoteDir, entry.name);
-      if (entry.isDirectory()) await this.uploadDir(local, remote);
+      if (skip?.(local, entry.isDirectory())) continue;
+      if (entry.isDirectory()) await this.uploadDir(local, remote, skip);
       else if (entry.isFile()) await this.put(local, remote);
     }
   }
@@ -745,14 +755,15 @@ class FtpRemote implements RemoteClient {
     await this.client.uploadFrom(localPath, remotePath);
   }
 
-  async uploadDir(localDir: string, remoteDir: string): Promise<void> {
+  async uploadDir(localDir: string, remoteDir: string, skip?: (localPath: string, isDir: boolean) => boolean): Promise<void> {
     // Own directory walk instead of basic-ftp's uploadFromDir, which follows symbolic links.
     await this.ensureDir(remoteDir);
     for (const entry of await fs.promises.readdir(localDir, { withFileTypes: true })) {
       if (entry.isSymbolicLink()) continue;
       const local = path.join(localDir, entry.name);
       const remote = path.posix.join(remoteDir, entry.name);
-      if (entry.isDirectory()) await this.uploadDir(local, remote);
+      if (skip?.(local, entry.isDirectory())) continue;
+      if (entry.isDirectory()) await this.uploadDir(local, remote, skip);
       else if (entry.isFile()) await this.put(local, remote);
     }
   }
@@ -828,6 +839,7 @@ async function uploadUris(uris: vscode.Uri[]) {
   const cache: RunCache = { raw: new Map(), profiles: new Map(), warnedPlaintext: new Set(), warnedInsecure: new Set() };
   const jobs = new Map<string, { config: ResolvedConfig; files: FileJob[] }>();
   const failed: string[] = [];
+  const ignoredFiles: string[] = [];
 
   // 1. Map each file to a config and remote path
   for (const uri of uris) {
@@ -850,6 +862,12 @@ async function uploadUris(uris: vscode.Uri[]) {
       continue;
     }
     const rel = path.relative(config.contextPath, uri.fsPath).split(path.sep).join('/');
+    // Never upload (or delete on the server) what sftp.json's "ignore" list excludes, such as .env.
+    const isDir = (await lstatSafe(uri.fsPath))?.isDirectory() ?? false;
+    if (config.isIgnored(rel, isDir)) {
+      ignoredFiles.push(display);
+      continue;
+    }
     const job = jobs.get(config.key) ?? { config, files: [] };
     job.files.push({
       localPath: uri.fsPath,
@@ -862,10 +880,11 @@ async function uploadUris(uris: vscode.Uri[]) {
   const total = [...jobs.values()].reduce((n, j) => n + j.files.length, 0);
   let uploaded = 0;
   let deleted = 0;
-  const skipped: string[] = [];
+  const skipped: string[] = [...ignoredFiles];
   let cancelled = false;
 
   output.appendLine(`\n[${new Date().toLocaleTimeString()}] Upload of ${total} file(s) started`);
+  ignoredFiles.forEach((f) => output.appendLine(`  skipped (sftp.json ignore)  ${f}`));
 
   // 2. One connection per server, all files over it
   if (total > 0) {
@@ -918,7 +937,12 @@ async function uploadUris(uris: vscode.Uri[]) {
                   skipped.push(f.display);
                   output.appendLine(`  skipped (symbolic link)  ${f.display}`);
                 } else if (stat.isDirectory()) {
-                  await client.uploadDir(f.localPath, f.remotePath);
+                  const relOf = (p: string) => path.relative(config.contextPath, p).split(path.sep).join('/');
+                  await client.uploadDir(f.localPath, f.remotePath, (p, isDir) => {
+                    const skip = config.isIgnored(relOf(p), isDir);
+                    if (skip) output.appendLine(`  skipped (sftp.json ignore)  ${vscode.workspace.asRelativePath(p)}`);
+                    return skip;
+                  });
                   uploaded++;
                   output.appendLine(`  directory   ${f.display} → ${f.remotePath}`);
                 } else {

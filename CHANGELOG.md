@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0
+
+- **Respects the `ignore` list of sftp.json.** Changed files on that list (gitignore syntax, relative to the `context`), such as `/.env`, are skipped and logged, also inside an uploaded folder, and are never deleted on the server. Works with **Never Upload** in SFTP Folder Upload and with the `ignore` list of the SFTP extension by Natizyskunk.
+
 ## 0.2.6
 
 - Marketplace listing: README with a rating badge, a "Get started in 30 seconds" section, a comparison with uploading by hand and full sync, more FAQ, and links to rate the extension. More search keywords. No functional changes.

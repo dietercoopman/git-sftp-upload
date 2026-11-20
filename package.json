@@ -2,7 +2,7 @@
   "name": "git-sftp-upload",
   "displayName": "Git SFTP Upload",
   "description": "Upload only the files you changed in git to your server via SFTP or FTPS, in one click from Source Control or the Git SFTP Upload view. Uses your existing .vscode/sftp.json.",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "publisher": "delta-solutions",
   "author": "Delta Solutions",
   "license": "MIT",
@@ -210,12 +210,14 @@
         "gitSftpUpload.configFile": {
           "type": "string",
           "default": ".vscode/sftp.json",
-          "description": "Path (relative to the workspace folder, and inside it) to the SFTP config. Defaults to the same file used by the SFTP extension by Natizyskunk."
+          "description": "Path (relative to the workspace folder, and inside it) to the SFTP config. Defaults to the same file used by the SFTP extension by Natizyskunk.",
+          "scope": "resource"
         },
         "gitSftpUpload.deleteRemoteOnDelete": {
           "type": "boolean",
           "default": false,
-          "description": "Also delete the file on the server when it has been deleted locally. By default, deleted files are skipped."
+          "description": "Also delete the file on the server when it has been deleted locally. By default, deleted files are skipped.",
+          "scope": "resource"
         }
       }
     },
@@ -262,6 +264,7 @@
   },
   "dependencies": {
     "basic-ftp": "^5.3.1",
+    "ignore": "^5.3.2",
     "jsonc-parser": "^3.3.1",
     "ssh2-sftp-client": "^11.0.0"
   },
