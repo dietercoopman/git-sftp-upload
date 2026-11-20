@@ -1,30 +1,50 @@
 # Git SFTP Upload
 
-![Upload only what you changed. Straight from VS Code.](images/marketplace/hero.png)
-
-**Upload only what you changed.** Git already knows which files you touched. Git SFTP Upload lists exactly those files and puts them on your server via SFTP or FTPS with one click, from the Source Control view or its own sidebar view. No full sync, no guessing, nothing else on the server is touched.
-
-It reads the `.vscode/sftp.json` you already have, so there is nothing to set up.
-
 [![VS Marketplace](https://vsmarketplacebadges.dev/version-short/delta-solutions.git-sftp-upload.svg?color=0f172a)](https://marketplace.visualstudio.com/items?itemName=delta-solutions.git-sftp-upload)
 [![Installs](https://vsmarketplacebadges.dev/installs-short/delta-solutions.git-sftp-upload.svg?color=0f172a)](https://marketplace.visualstudio.com/items?itemName=delta-solutions.git-sftp-upload)
+[![Rating](https://vsmarketplacebadges.dev/rating-short/delta-solutions.git-sftp-upload.svg?color=0f172a)](https://marketplace.visualstudio.com/items?itemName=delta-solutions.git-sftp-upload&ssr=false#review-details)
 [![Open VSX](https://img.shields.io/open-vsx/v/delta-solutions/git-sftp-upload?label=Open%20VSX&color=0f172a)](https://open-vsx.org/extension/delta-solutions/git-sftp-upload)
 [![License: MIT](https://img.shields.io/badge/license-MIT-0f172a)](LICENSE)
 
-**Install:** search for *Git SFTP Upload* in the Extensions view, or open `vscode:extension/delta-solutions.git-sftp-upload`. Also available for Cursor and VSCodium through [Open VSX](https://open-vsx.org/extension/delta-solutions/git-sftp-upload). Free, MIT licensed, macOS, Windows and Linux.
+![Upload only what you changed. Straight from VS Code.](images/marketplace/hero.png)
+
+**Upload only what you changed.** Git already knows which files you touched. Git SFTP Upload lists exactly those files and puts them on your server via SFTP or FTPS in one click, from Source Control or its own sidebar view. No full sync, no hunting through folders, nothing else on the server is touched.
+
+It reads the `.vscode/sftp.json` you already have, so there is nothing to set up.
+
+**[Install from the VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=delta-solutions.git-sftp-upload)** · **[Open VSX for Cursor, VSCodium and Windsurf](https://open-vsx.org/extension/delta-solutions/git-sftp-upload)** · Free, MIT licensed, macOS, Windows and Linux.
 
 ## Why
 
-You fix a bug in two files and a stylesheet. The whole project does not need to go to the server, just those three files. Until now that meant hunting them down in the Explorer one by one, or running a full sync and hoping nothing unexpected went along.
+You fix a bug in two PHP files and a stylesheet. The whole project does not need to go to the server, just those three files. Until now that meant finding them in the Explorer one by one, or running a full sync and hoping nothing unexpected went along.
 
 Git SFTP Upload turns your git status into an upload list:
 
-- **Only changed files.** Staged, modified and untracked files, grouped like Source Control shows them. Nothing else is ever uploaded.
+- **Only changed files.** Staged, modified and untracked files, grouped the way Source Control shows them. Nothing else is ever uploaded.
 - **One click, or a selection.** A single file, several files (Cmd/Ctrl-click), a whole group, or everything at once.
 - **Where you already work.** In the Source Control view and in the Git SFTP Upload view in the Activity Bar.
 - **Your existing config.** Same `.vscode/sftp.json` as the SFTP extension by Natizyskunk, including profiles and multiple servers. Both extensions work side by side.
 - **SFTP and FTPS.** Password, private key or SSH agent for SFTP. Explicit or implicit TLS for FTPS.
-- **Safe by default.** Host keys are verified like ssh does, symbolic links are never followed, plain FTP and plaintext passwords are flagged.
+- **Safe by default.** Host keys are verified like ssh does, server permissions are kept, symbolic links are never followed, plain FTP and plaintext passwords are flagged.
+
+### Made for projects without a deploy pipeline
+
+Not every site has CI/CD. A WordPress theme on shared hosting, a Laravel or PHP app on a VPS, a static site, a staging server for a client: you edit locally, commit to git, and copy the changes over SFTP. Git SFTP Upload makes that last step one click and takes the guesswork out of it.
+
+| | Upload by hand | Full sync | **Git SFTP Upload** |
+|---|:---:|:---:|:---:|
+| Knows which files changed | No, you remember | Compares everything | **Yes, from git** |
+| Touches only your changes | Yes, if you don't forget one | No | **Yes** |
+| Time for a three-file fix | Minutes | Depends on project size | **One click** |
+| Host key check and summary of what went where | No | Varies | **Yes** |
+
+## Get started in 30 seconds
+
+1. **Install** the extension. A cloud icon appears in the Activity Bar.
+2. **Point it at your server** with a `.vscode/sftp.json` (see [Configuration](#configuration)). Already using the SFTP extension by Natizyskunk? Then you have one, skip this step.
+3. **Change some files** and click the cloud icon next to a file, a group, or in the view header. Done.
+
+A full user guide with screenshots is available as a PDF: [Git SFTP Upload User Guide](https://www.deltasolutions.be/delta-tools-center/downloads/git-sftp-upload/Git-SFTP-Upload-User-Guide.pdf).
 
 ## A quick tour
 
@@ -51,14 +71,6 @@ The first time you connect to a server, its SSH host key fingerprint is shown an
 A progress notification with cancel, a result summary when it is done, and a full log in the Output panel under *Git SFTP Upload*: which file went where, and what was skipped.
 
 ![Output panel and result notification](images/marketplace/output.png)
-
-## How it works
-
-1. Install the extension. A cloud icon appears in the Activity Bar.
-2. Make sure your project has a `.vscode/sftp.json` (see below). If you use the SFTP extension by Natizyskunk, you already have one.
-3. Change some files. Click the cloud icon next to a file, a group, or in the view header. Done.
-
-A full user guide with screenshots (PDF) is available from Delta Solutions: https://www.deltasolutions.be/delta-tools-center/downloads/git-sftp-upload/Git-SFTP-Upload-User-Guide.pdf
 
 ## Configuration
 
@@ -99,10 +111,15 @@ Settings:
 - **Config stays in the workspace.** `gitSftpUpload.configFile` must point inside the workspace folder.
 - **Avoid plaintext passwords.** Use `"password": true` to be prompted instead; the Output panel warns when a plaintext password or passphrase is found.
 
+Found a security issue? Please report it privately, see [SECURITY.md](SECURITY.md).
+
 ## FAQ
 
 **Does it replace the SFTP extension by Natizyskunk?**
 No, it complements it. That extension syncs, downloads, diffs and uploads on save. Git SFTP Upload does one thing: upload the files git says you changed, one at a time or all at once, with a confirmation for unknown servers. Both read the same `sftp.json` and can be installed together.
+
+**Do I need to commit before uploading?**
+No. Modified and untracked files can be uploaded straight away, staged or not. Git is only used to know which files changed.
 
 **Does it upload deleted files?**
 Locally deleted files are skipped by default. Turn on `gitSftpUpload.deleteRemoteOnDelete` to delete them on the server too.
@@ -110,9 +127,18 @@ Locally deleted files are skipped by default. Turn on `gitSftpUpload.deleteRemot
 **Which files count as changed?**
 Whatever git shows in Source Control: staged, modified and untracked files. Ignored files never appear.
 
-**Does it work with Cursor or VSCodium?**
+**Can I upload to more than one server?**
+Yes. Use `profiles` (for example staging and production) or an array of configs in `sftp.json`. Without a `defaultProfile` you choose the profile at upload time.
+
+**Does it work with Cursor, VSCodium or Windsurf?**
 Yes, install it from [Open VSX](https://open-vsx.org/extension/delta-solutions/git-sftp-upload).
+
+## Like it?
+
+- **Rate it** on the [Marketplace](https://marketplace.visualstudio.com/items?itemName=delta-solutions.git-sftp-upload&ssr=false#review-details). A short review helps other developers find it.
+- **Star it** on [GitHub](https://github.com/dietercoopman/git-sftp-upload).
+- **Ideas or bugs?** [Open an issue](https://github.com/dietercoopman/git-sftp-upload/issues/new/choose).
 
 ## Publisher
 
-[Delta Solutions](https://www.deltasolutions.be/). Source on [GitHub](https://github.com/dietercoopman/git-sftp-upload); issues and ideas are welcome there.
+Made by [Delta Solutions](https://www.deltasolutions.be/) in Belgium. More free tools in the [Delta Tools Center](https://www.deltasolutions.be/delta-tools-center/).
